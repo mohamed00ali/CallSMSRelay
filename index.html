@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notify - تطبيق التنبيهات</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Splash Screen -->
+        <div id="splashScreen" class="screen active">
+            <div class="splash-content">
+                <div class="logo-large">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h1>Notify</h1>
+                <p>تطبيق التنبيهات الذكي</p>
+                <div class="loader"></div>
+            </div>
+        </div>
+
+        <!-- Onboarding -->
+        <div id="onboardingScreen" class="screen">
+            <div class="onboarding-container">
+                <div class="onboarding-slide" data-slide="1">
+                    <div class="onboarding-icon">🔔</div>
+                    <h2>استقبل التنبيهات</h2>
+                    <p>احصل على تنبيهات فورية للمكالمات والرسائل على هاتفك الآخر</p>
+                </div>
+                <div class="onboarding-slide" data-slide="2" style="display: none;">
+                    <div class="onboarding-icon">🔗</div>
+                    <h2>ربط الأجهزة</h2>
+                    <p>اربط هاتفيك بسهولة عبر Bluetooth أو WiFi أو الإنترنت</p>
+                </div>
+                <div class="onboarding-slide" data-slide="3" style="display: none;">
+                    <div class="onboarding-icon">⚡</div>
+                    <h2>بسيط وسريع</h2>
+                    <p>واجهة سهلة وسريعة لن تأخذ منك وقتاً</p>
+                </div>
+
+                <div class="onboarding-dots">
+                    <span class="dot active" data-dot="1"></span>
+                    <span class="dot" data-dot="2"></span>
+                    <span class="dot" data-dot="3"></span>
+                </div>
+
+                <button id="nextBtn" class="btn-primary" onclick="nextSlide()">التالي</button>
+                <button id="skipBtn" class="btn-secondary" onclick="goToHome()" style="display: none;">تخطي</button>
+            </div>
+        </div>
+
+        <!-- Main Navigation -->
+        <div id="mainApp" class="screen">
+            <!-- Top Header -->
+            <header class="header">
+                <div class="header-content">
+                    <h1><i class="fas fa-bell"></i> Notify</h1>
+                    <div class="header-actions">
+                        <button id="settingsBtn" class="icon-btn" onclick="goToSettings()">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+                    <i class="fas fa-home"></i>
+                    <span>الرئيسية</span>
+                </button>
+                <button class="nav-btn" data-tab="devices" onclick="switchTab('devices')">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>الأجهزة</span>
+                </button>
+                <button class="nav-btn" data-tab="messages" onclick="switchTab('messages')">
+                    <i class="fas fa-envelope"></i>
+                    <span>الرسائل</span>
+                </button>
+                <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>الإعدادات</span>
+                </button>
+            </nav>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Home Tab -->
+                <div id="homeTab" class="tab-content active">
+                    <div class="home-container">
+                        <!-- Connection Status Card -->
+                        <div class="card status-card">
+                            <div class="status-header">
+                                <h2>حالة الاتصال</h2>
+                                <span class="status-badge" id="statusBadge">
+                                    <i class="fas fa-dot-circle"></i> غير متصل
+                                </span>
+                            </div>
+                            <div class="status-details">
+                                <div class="device-info">
+                                    <div class="device-avatar">📱</div>
+                                    <div class="device-text">
+                                        <p class="device-name" id="connectedDeviceName">لم يتم ربط جهاز</p>
+                                        <p class="device-model" id="connectedDeviceModel">--</p>
+                                    </div>
+                                </div>
+                                <div class="connection-method">
+                                    <span class="method-badge" id="methodBadge">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Features Status -->
+                        <div class="features-grid">
+                            <div class="feature-card">
+                                <div class="feature-icon">📞</div>
+                                <h3>المكالمات</h3>
+                                <p class="feature-status" id="callStatus">مفعّل</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">💬</div>
+                                <h3>الرسائل</h3>
+                                <p class="feature-status" id="smsStatus">مفعّل</p>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="quick-actions">
+                            <button class="btn-primary btn-block" onclick="goToDevices()">
+                                <i class="fas fa-plus"></i> إضافة جهاز
+                            </button>
+                            <button class="btn-secondary btn-block" onclick="changeConnectionMethod()">
+                                <i class="fas fa-exchange-alt"></i> تغيير طريقة الاتصال
+                            </button>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="activity-section">
+                            <h3>النشاط الأخير</h3>
+                            <div id="recentActivity" class="activity-list">
+                                <p class="empty-state">لا توجد نشاطات حالياً</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Devices Tab -->
+                <div id="devicesTab" class="tab-content">
+                    <div class="devices-container">
+                        <div id="devicesList" class="devices-list">
+                            <p class="empty-state">لم يتم ربط أي جهاز</p>
+                        </div>
+                        <button class="btn-primary btn-block" onclick="startAddDevice()" style="margin-top: 20px;">
+                            <i class="fas fa-plus"></i> إضافة جهاز جديد
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages Tab -->
+                <div id="messagesTab" class="tab-content">
+                    <div class="messages-container">
+                        <div id="messagesList" class="messages-list">
+                            <p class="empty-state">لا توجد رسائل</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div id="settingsTab" class="tab-content">
+                    <div class="settings-container">
+                        <div class="settings-section">
+                            <h3>الاتصال</h3>
+                            <div class="setting-item">
+                                <label>طريقة الاتصال</label>
+                                <select id="connectionMethod" onchange="updateConnectionMethod()">
+                                    <option value="bluetooth">البلوتوث</option>
+                                    <option value="wifi">شبكة محلية</option>
+                                    <option value="internet">الإنترنت</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label for="autoReconnect">إعادة الاتصال التلقائية</label>
+                                <input type="checkbox" id="autoReconnect" checked onchange="updateSettings()">
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>الإشعارات</h3>
+                            <div class="setting-item">
+                                <label for="callNotifications">إشعارات المكالمات</label>
+                                <input type="checkbox" id="callNotifications" checked onchange="updateSettings()">
+                            </div>
+                            <div class="setting-item">
+                                <label for="smsNotifications">إشعارات الرسائل</label>
+                                <input type="checkbox" id="smsNotifications" checked onchange="updateSettings()">
+                            </div>
+                            <div class="setting-item">
+                                <label>رنين المكالمة</label>
+                                <select id="ringtone" onchange="updateSettings()">
+                                    <option value="classic">كلاسيكي</option>
+                                    <option value="digital">رقمي</option>
+                                    <option value="modern">حديث</option>
+                                    <option value="soft">ناعم</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>المظهر</h3>
+                            <div class="setting-item">
+                                <label>المظهر</label>
+                                <select id="theme" onchange="updateTheme()">
+                                    <option value="dark">داكن</option>
+                                    <option value="light">فاتح</option>
+                                    <option value="purple">بنفسجي</option>
+                                    <option value="blue">أزرق</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>الأمان</h3>
+                            <button class="btn-danger btn-block" onclick="unlinkAllDevices()">
+                                <i class="fas fa-unlink"></i> إلغاء ربط جميع الأجهزة
+                            </button>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>معلومات</h3>
+                            <div class="info-text">
+                                <p><strong>النسخة:</strong> 1.0.0</p>
+                                <p><strong>التطبيق:</strong> Notify</p>
+                                <p>تطبيق ذكي لتنبيهات المكالمات والرسائل</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Device Modal -->
+        <div id="addDeviceModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>إضافة جهاز جديد</h2>
+                    <button class="close-btn" onclick="closeModal('addDeviceModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="add-device-steps">
+                        <div class="step active" data-step="1">
+                            <h3>اختر طريقة الاتصال</h3>
+                            <div class="connection-options">
+                                <button class="option-btn" onclick="selectConnectionMode('bluetooth')">
+                                    <i class="fas fa-bluetooth"></i>
+                                    <span>البلوتوث</span>
+                                </button>
+                                <button class="option-btn" onclick="selectConnectionMode('wifi')">
+                                    <i class="fas fa-wifi"></i>
+                                    <span>شبكة محلية</span>
+                                </button>
+                                <button class="option-btn" onclick="selectConnectionMode('internet')">
+                                    <i class="fas fa-globe"></i>
+                                    <span>الإنترنت</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="2">
+                            <h3>الأجهزة المتاحة</h3>
+                            <div id="availableDevices" class="devices-grid">
+                                <p class="empty-state">جاري البحث عن الأجهزة...</p>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="3">
+                            <h3>رمز المصادقة</h3>
+                            <p class="step-desc">أدخل هذا الرمز على الجهاز الآخر</p>
+                            <div class="pairing-code">
+                                <span id="pairingCode">739421</span>
+                                <button class="copy-btn" onclick="copyPairingCode()">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <p class="code-timer">ينتهي الصلاحية بعد: <span id="codeTimer">120</span> ثانية</p>
+                        </div>
+
+                        <div class="step" data-step="4">
+                            <h3>تم الربط بنجاح!</h3>
+                            <div class="success-icon">✓</div>
+                            <p>تم ربط الجهاز بنجاح</p>
+                            <p class="device-connected" id="successDeviceName">Device Name</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="prevStep()">السابق</button>
+                    <button class="btn-primary" onclick="nextStep()">التالي</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call Alert Notification -->
+        <div id="callAlert" class="call-alert">
+            <div class="call-alert-content">
+                <div class="call-icon">📞</div>
+                <div class="call-info">
+                    <h3 id="callerName">اسم المتصل</h3>
+                    <p id="callerNumber">رقم الهاتف</p>
+                    <span class="call-source">من <span id="callFromDevice">الجهاز الآخر</span></span>
+                </div>
+            </div>
+            <button class="close-alert" onclick="closeCallAlert()">×</button>
+        </div>
+
+        <!-- SMS Notification Toast -->
+        <div id="smsToast" class="sms-toast">
+            <div class="toast-content">
+                <i class="fas fa-envelope"></i>
+                <div class="toast-text">
+                    <p id="smsFrom">من: المرسل</p>
+                    <p id="smsPreview">نص الرسالة</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
