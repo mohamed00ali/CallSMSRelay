@@ -4,17 +4,400 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notify - تطبيق التنبيهات</title>
-    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #00d9ff;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #splashScreen {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .splash-content {
+            text-align: center;
+            color: white;
+        }
+
+        .splash-content h1 {
+            font-size: 48px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .splash-content p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .logo-large {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 15px 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 70px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 70px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            z-index: 101;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 10px;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .nav-btn.active {
+            color: var(--primary-color);
+        }
+
+        .nav-btn i {
+            font-size: 24px;
+        }
+
+        .home-container, .devices-container, .messages-container, .settings-container {
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(0, 217, 255, 0.1));
+            border: 2px solid var(--primary-color);
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--success-color);
+        }
+
+        .btn-primary {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px 20px;
+        }
+
+        .device-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .device-item-info {
+            flex: 1;
+        }
+
+        .device-item-info h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .device-item-info p {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            display: inline-block;
+            width: 48%;
+            margin-right: 2%;
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .feature-status {
+            font-size: 13px;
+            color: var(--success-color);
+            font-weight: 500;
+        }
+
+        .activity-section {
+            margin-top: 30px;
+        }
+
+        .activity-section h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .activity-item {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .onboarding-container {
+            padding: 40px 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            background: var(--bg-dark);
+        }
+
+        .onboarding-slide {
+            display: none;
+        }
+
+        .onboarding-slide.active {
+            display: block;
+        }
+
+        .onboarding-icon {
+            font-size: 100px;
+            margin-bottom: 20px;
+        }
+
+        .onboarding-slide h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .onboarding-slide p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .onboarding-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: var(--primary-color);
+            width: 30px;
+            border-radius: 5px;
+        }
+
+        .info-text {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .info-text p {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .settings-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-section h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .setting-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .quick-actions {
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .feature-card {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
         <!-- Splash Screen -->
         <div id="splashScreen" class="screen active">
             <div class="splash-content">
-                <div class="logo-large">
-                    <i class="fas fa-bell"></i>
-                </div>
+                <div class="logo-large">🔔</div>
                 <h1>Notify</h1>
                 <p>تطبيق التنبيهات الذكي</p>
                 <div class="loader"></div>
@@ -24,20 +407,20 @@
         <!-- Onboarding -->
         <div id="onboardingScreen" class="screen">
             <div class="onboarding-container">
-                <div class="onboarding-slide" data-slide="1">
+                <div class="onboarding-slide active" data-slide="1">
                     <div class="onboarding-icon">🔔</div>
                     <h2>استقبل التنبيهات</h2>
-                    <p>احصل على تنبيهات فورية للمكالمات والرسائل على هاتفك الآخر</p>
+                    <p>احصل على تنبيهات فورية للمكالمات والرسائل</p>
                 </div>
-                <div class="onboarding-slide" data-slide="2" style="display: none;">
+                <div class="onboarding-slide" data-slide="2">
                     <div class="onboarding-icon">🔗</div>
                     <h2>ربط الأجهزة</h2>
-                    <p>اربط هاتفيك بسهولة عبر Bluetooth أو WiFi أو الإنترنت</p>
+                    <p>اربط هاتفيك بسهولة عبر Bluetooth أو WiFi</p>
                 </div>
-                <div class="onboarding-slide" data-slide="3" style="display: none;">
+                <div class="onboarding-slide" data-slide="3">
                     <div class="onboarding-icon">⚡</div>
                     <h2>بسيط وسريع</h2>
-                    <p>واجهة سهلة وسريعة لن تأخذ منك وقتاً</p>
+                    <p>واجهة سهلة وسريعة</p>
                 </div>
 
                 <div class="onboarding-dots">
@@ -46,100 +429,53 @@
                     <span class="dot" data-dot="3"></span>
                 </div>
 
-                <button id="nextBtn" class="btn-primary" onclick="nextSlide()">التالي</button>
-                <button id="skipBtn" class="btn-secondary" onclick="goToHome()" style="display: none;">تخطي</button>
+                <button id="nextBtn" class="btn-primary" onclick="nextSlide()" style="margin: 20px auto; width: 200px;">التالي</button>
             </div>
         </div>
 
-        <!-- Main Navigation -->
+        <!-- Main App -->
         <div id="mainApp" class="screen">
-            <!-- Top Header -->
+            <!-- Header -->
             <header class="header">
-                <div class="header-content">
-                    <h1><i class="fas fa-bell"></i> Notify</h1>
-                    <div class="header-actions">
-                        <button id="settingsBtn" class="icon-btn" onclick="goToSettings()">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                    </div>
-                </div>
+                <h1>🔔 Notify</h1>
             </header>
-
-            <!-- Bottom Navigation -->
-            <nav class="bottom-nav">
-                <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
-                    <i class="fas fa-home"></i>
-                    <span>الرئيسية</span>
-                </button>
-                <button class="nav-btn" data-tab="devices" onclick="switchTab('devices')">
-                    <i class="fas fa-mobile-alt"></i>
-                    <span>الأجهزة</span>
-                </button>
-                <button class="nav-btn" data-tab="messages" onclick="switchTab('messages')">
-                    <i class="fas fa-envelope"></i>
-                    <span>الرسائل</span>
-                </button>
-                <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')">
-                    <i class="fas fa-sliders-h"></i>
-                    <span>الإعدادات</span>
-                </button>
-            </nav>
 
             <!-- Content Area -->
             <div class="content-area">
                 <!-- Home Tab -->
                 <div id="homeTab" class="tab-content active">
                     <div class="home-container">
-                        <!-- Connection Status Card -->
                         <div class="card status-card">
                             <div class="status-header">
                                 <h2>حالة الاتصال</h2>
-                                <span class="status-badge" id="statusBadge">
-                                    <i class="fas fa-dot-circle"></i> غير متصل
+                                <span class="status-badge">
+                                    <i class="fas fa-dot-circle"></i> متصل
                                 </span>
-                            </div>
-                            <div class="status-details">
-                                <div class="device-info">
-                                    <div class="device-avatar">📱</div>
-                                    <div class="device-text">
-                                        <p class="device-name" id="connectedDeviceName">لم يتم ربط جهاز</p>
-                                        <p class="device-model" id="connectedDeviceModel">--</p>
-                                    </div>
-                                </div>
-                                <div class="connection-method">
-                                    <span class="method-badge" id="methodBadge">--</span>
-                                </div>
                             </div>
                         </div>
 
-                        <!-- Features Status -->
-                        <div class="features-grid">
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                             <div class="feature-card">
                                 <div class="feature-icon">📞</div>
                                 <h3>المكالمات</h3>
-                                <p class="feature-status" id="callStatus">مفعّل</p>
+                                <p class="feature-status">مفعّل</p>
                             </div>
                             <div class="feature-card">
                                 <div class="feature-icon">💬</div>
                                 <h3>الرسائل</h3>
-                                <p class="feature-status" id="smsStatus">مفعّل</p>
+                                <p class="feature-status">مفعّل</p>
                             </div>
                         </div>
 
-                        <!-- Quick Actions -->
                         <div class="quick-actions">
-                            <button class="btn-primary btn-block" onclick="goToDevices()">
+                            <button class="btn-primary btn-block" onclick="switchTab('devices', event)">
                                 <i class="fas fa-plus"></i> إضافة جهاز
-                            </button>
-                            <button class="btn-secondary btn-block" onclick="changeConnectionMethod()">
-                                <i class="fas fa-exchange-alt"></i> تغيير طريقة الاتصال
                             </button>
                         </div>
 
-                        <!-- Recent Activity -->
                         <div class="activity-section">
                             <h3>النشاط الأخير</h3>
-                            <div id="recentActivity" class="activity-list">
+                            <div id="recentActivity">
                                 <p class="empty-state">لا توجد نشاطات حالياً</p>
                             </div>
                         </div>
@@ -149,11 +485,11 @@
                 <!-- Devices Tab -->
                 <div id="devicesTab" class="tab-content">
                     <div class="devices-container">
-                        <div id="devicesList" class="devices-list">
+                        <div id="devicesList">
                             <p class="empty-state">لم يتم ربط أي جهاز</p>
                         </div>
-                        <button class="btn-primary btn-block" onclick="startAddDevice()" style="margin-top: 20px;">
-                            <i class="fas fa-plus"></i> إضافة جهاز جديد
+                        <button class="btn-primary btn-block" onclick="addDemoDevice()" style="margin: 20px;">
+                            <i class="fas fa-plus"></i> إضافة جهاز تجريبي
                         </button>
                     </div>
                 </div>
@@ -161,9 +497,12 @@
                 <!-- Messages Tab -->
                 <div id="messagesTab" class="tab-content">
                     <div class="messages-container">
-                        <div id="messagesList" class="messages-list">
+                        <div id="messagesList">
                             <p class="empty-state">لا توجد رسائل</p>
                         </div>
+                        <button class="btn-primary btn-block" onclick="addDemoMessage()" style="margin: 20px;">
+                            <i class="fas fa-plus"></i> إضافة رسالة تجريبية
+                        </button>
                     </div>
                 </div>
 
@@ -171,161 +510,183 @@
                 <div id="settingsTab" class="tab-content">
                     <div class="settings-container">
                         <div class="settings-section">
-                            <h3>الاتصال</h3>
-                            <div class="setting-item">
-                                <label>طريقة الاتصال</label>
-                                <select id="connectionMethod" onchange="updateConnectionMethod()">
-                                    <option value="bluetooth">البلوتوث</option>
-                                    <option value="wifi">شبكة محلية</option>
-                                    <option value="internet">الإنترنت</option>
-                                </select>
-                            </div>
-                            <div class="setting-item">
-                                <label for="autoReconnect">إعادة الاتصال التلقائية</label>
-                                <input type="checkbox" id="autoReconnect" checked onchange="updateSettings()">
-                            </div>
-                        </div>
-
-                        <div class="settings-section">
                             <h3>الإشعارات</h3>
                             <div class="setting-item">
-                                <label for="callNotifications">إشعارات المكالمات</label>
-                                <input type="checkbox" id="callNotifications" checked onchange="updateSettings()">
+                                <label>إشعارات المكالمات</label>
+                                <input type="checkbox" checked>
                             </div>
                             <div class="setting-item">
-                                <label for="smsNotifications">إشعارات الرسائل</label>
-                                <input type="checkbox" id="smsNotifications" checked onchange="updateSettings()">
+                                <label>إشعارات الرسائل</label>
+                                <input type="checkbox" checked>
                             </div>
-                            <div class="setting-item">
-                                <label>رنين المكالمة</label>
-                                <select id="ringtone" onchange="updateSettings()">
-                                    <option value="classic">كلاسيكي</option>
-                                    <option value="digital">رقمي</option>
-                                    <option value="modern">حديث</option>
-                                    <option value="soft">ناعم</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="settings-section">
-                            <h3>المظهر</h3>
-                            <div class="setting-item">
-                                <label>المظهر</label>
-                                <select id="theme" onchange="updateTheme()">
-                                    <option value="dark">داكن</option>
-                                    <option value="light">فاتح</option>
-                                    <option value="purple">بنفسجي</option>
-                                    <option value="blue">أزرق</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="settings-section">
-                            <h3>الأمان</h3>
-                            <button class="btn-danger btn-block" onclick="unlinkAllDevices()">
-                                <i class="fas fa-unlink"></i> إلغاء ربط جميع الأجهزة
-                            </button>
                         </div>
 
                         <div class="settings-section">
                             <h3>معلومات</h3>
                             <div class="info-text">
                                 <p><strong>النسخة:</strong> 1.0.0</p>
-                                <p><strong>التطبيق:</strong> Notify</p>
-                                <p>تطبيق ذكي لتنبيهات المكالمات والرسائل</p>
+                                <p><strong>التطبيق:</strong> Notify - تطبيق التنبيهات الذكي</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Add Device Modal -->
-        <div id="addDeviceModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>إضافة جهاز جديد</h2>
-                    <button class="close-btn" onclick="closeModal('addDeviceModal')">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="add-device-steps">
-                        <div class="step active" data-step="1">
-                            <h3>اختر طريقة الاتصال</h3>
-                            <div class="connection-options">
-                                <button class="option-btn" onclick="selectConnectionMode('bluetooth')">
-                                    <i class="fas fa-bluetooth"></i>
-                                    <span>البلوتوث</span>
-                                </button>
-                                <button class="option-btn" onclick="selectConnectionMode('wifi')">
-                                    <i class="fas fa-wifi"></i>
-                                    <span>شبكة محلية</span>
-                                </button>
-                                <button class="option-btn" onclick="selectConnectionMode('internet')">
-                                    <i class="fas fa-globe"></i>
-                                    <span>الإنترنت</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="step" data-step="2">
-                            <h3>الأجهزة المتاحة</h3>
-                            <div id="availableDevices" class="devices-grid">
-                                <p class="empty-state">جاري البحث عن الأجهزة...</p>
-                            </div>
-                        </div>
-
-                        <div class="step" data-step="3">
-                            <h3>رمز المصادقة</h3>
-                            <p class="step-desc">أدخل هذا الرمز على الجهاز الآخر</p>
-                            <div class="pairing-code">
-                                <span id="pairingCode">739421</span>
-                                <button class="copy-btn" onclick="copyPairingCode()">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                            <p class="code-timer">ينتهي الصلاحية بعد: <span id="codeTimer">120</span> ثانية</p>
-                        </div>
-
-                        <div class="step" data-step="4">
-                            <h3>تم الربط بنجاح!</h3>
-                            <div class="success-icon">✓</div>
-                            <p>تم ربط الجهاز بنجاح</p>
-                            <p class="device-connected" id="successDeviceName">Device Name</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" onclick="prevStep()">السابق</button>
-                    <button class="btn-primary" onclick="nextStep()">التالي</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Call Alert Notification -->
-        <div id="callAlert" class="call-alert">
-            <div class="call-alert-content">
-                <div class="call-icon">📞</div>
-                <div class="call-info">
-                    <h3 id="callerName">اسم المتصل</h3>
-                    <p id="callerNumber">رقم الهاتف</p>
-                    <span class="call-source">من <span id="callFromDevice">الجهاز الآخر</span></span>
-                </div>
-            </div>
-            <button class="close-alert" onclick="closeCallAlert()">×</button>
-        </div>
-
-        <!-- SMS Notification Toast -->
-        <div id="smsToast" class="sms-toast">
-            <div class="toast-content">
-                <i class="fas fa-envelope"></i>
-                <div class="toast-text">
-                    <p id="smsFrom">من: المرسل</p>
-                    <p id="smsPreview">نص الرسالة</p>
-                </div>
-            </div>
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button class="nav-btn active" onclick="switchTab('home', event)">
+                    <i class="fas fa-home"></i>
+                    <span>الرئيسية</span>
+                </button>
+                <button class="nav-btn" onclick="switchTab('devices', event)">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>الأجهزة</span>
+                </button>
+                <button class="nav-btn" onclick="switchTab('messages', event)">
+                    <i class="fas fa-envelope"></i>
+                    <span>الرسائل</span>
+                </button>
+                <button class="nav-btn" onclick="switchTab('settings', event)">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>الإعدادات</span>
+                </button>
+            </nav>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        let currentSlide = 1;
+        let onboarded = localStorage.getItem('notifyOnboarded');
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (!onboarded) {
+                    document.getElementById('splashScreen').classList.remove('active');
+                    document.getElementById('onboardingScreen').classList.add('active');
+                } else {
+                    document.getElementById('splashScreen').classList.remove('active');
+                    document.getElementById('mainApp').classList.add('active');
+                    loadDevices();
+                    loadMessages();
+                }
+            }, 2000);
+        });
+
+        function nextSlide() {
+            const slides = document.querySelectorAll('.onboarding-slide');
+            const dots = document.querySelectorAll('.dot');
+            
+            slides.forEach(s => s.classList.remove('active'));
+            dots.forEach(d => d.classList.remove('active'));
+            
+            if (currentSlide < 3) {
+                currentSlide++;
+            } else {
+                completeOnboarding();
+                return;
+            }
+            
+            document.querySelector(`[data-slide="${currentSlide}"]`).classList.add('active');
+            document.querySelector(`[data-dot="${currentSlide}"]`).classList.add('active');
+            
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentSlide === 3) {
+                nextBtn.textContent = 'ابدأ الآن';
+            }
+        }
+
+        function completeOnboarding() {
+            localStorage.setItem('notifyOnboarded', 'true');
+            document.getElementById('onboardingScreen').classList.remove('active');
+            document.getElementById('mainApp').classList.add('active');
+            loadDevices();
+            loadMessages();
+        }
+
+        function switchTab(tabName, event) {
+            if (event) {
+                const allButtons = document.querySelectorAll('.nav-btn');
+                allButtons.forEach(btn => btn.classList.remove('active'));
+                event.target.closest('.nav-btn').classList.add('active');
+            }
+            
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        function addDemoDevice() {
+            let devices = JSON.parse(localStorage.getItem('devices') || '[]');
+            devices.push({
+                id: Date.now(),
+                name: 'Samsung Galaxy',
+                model: 'SM-A515F',
+                date: new Date().toLocaleDateString('ar-SA')
+            });
+            localStorage.setItem('devices', JSON.stringify(devices));
+            loadDevices();
+            alert('✅ تم إضافة جهاز تجريبي');
+        }
+
+        function loadDevices() {
+            const devices = JSON.parse(localStorage.getItem('devices') || '[]');
+            const list = document.getElementById('devicesList');
+            
+            if (devices.length === 0) {
+                list.innerHTML = '<p class="empty-state">لم يتم ربط أي جهاز</p>';
+                return;
+            }
+            
+            list.innerHTML = devices.map(d => `
+                <div class="device-item">
+                    <div class="device-item-info">
+                        <h3>📱 ${d.name}</h3>
+                        <p>${d.model}</p>
+                        <p style="font-size: 12px; color: var(--text-secondary);">${d.date}</p>
+                    </div>
+                    <button class="btn-primary" onclick="removeDevice(${d.id})" style="padding: 8px 16px; font-size: 14px;">حذف</button>
+                </div>
+            `).join('');
+        }
+
+        function removeDevice(id) {
+            let devices = JSON.parse(localStorage.getItem('devices') || '[]');
+            devices = devices.filter(d => d.id !== id);
+            localStorage.setItem('devices', JSON.stringify(devices));
+            loadDevices();
+        }
+
+        function addDemoMessage() {
+            let messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            messages.unshift({
+                id: Date.now(),
+                from: 'أحمد',
+                number: '01012345678',
+                text: 'السلام عليكم، كيف حالك؟',
+                time: new Date().toLocaleTimeString('ar-SA')
+            });
+            localStorage.setItem('messages', JSON.stringify(messages));
+            loadMessages();
+            alert('✅ تم إضافة رسالة تجريبية');
+        }
+
+        function loadMessages() {
+            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            const list = document.getElementById('messagesList');
+            
+            if (messages.length === 0) {
+                list.innerHTML = '<p class="empty-state">لا توجد رسائل</p>';
+                return;
+            }
+            
+            list.innerHTML = messages.map(m => `
+                <div class="card">
+                    <strong>من: ${m.from}</strong><br>
+                    <small style="color: var(--text-secondary);">${m.number}</small><br>
+                    <p style="margin-top: 10px;">${m.text}</p>
+                    <small style="color: var(--text-secondary);">${m.time}</small>
+                </div>
+            `).join('');
+        }
+    </script>
 </body>
 </html>
